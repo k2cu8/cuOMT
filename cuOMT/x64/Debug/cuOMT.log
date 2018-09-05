@@ -1,0 +1,134 @@
+﻿  Compiling CUDA source file cuOMT_batched.cu...
+  Compiling CUDA source file cuOMT.cu...
+  
+  C:\Users\zz_ro\Dropbox\source\repo\cuOMT\cuOMT>"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2\bin\nvcc.exe" -gencode=arch=compute_30,code=\"sm_30,compute_30\" -gencode=arch=compute_61,code=\"sm_61,compute_61\" --use-local-env -ccbin "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.13.26128\bin\HostX86\x64" -x cu  -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2\include"  -G   --keep-dir x64\Debug -maxrregcount=0  --machine 64 --compile -cudart static  -g   -DWIN32 -DWIN64 -D_DEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /Od /FS /Zi /RTC1 /MDd " -o x64\Debug\cuOMT.cu.obj "C:\Users\zz_ro\Dropbox\source\repo\cuOMT\cuOMT\cuOMT.cu" 
+  Compiling CUDA source file cuOMT_simple.cu...
+  
+  C:\Users\zz_ro\Dropbox\source\repo\cuOMT\cuOMT>"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2\bin\nvcc.exe" -gencode=arch=compute_30,code=\"sm_30,compute_30\" -gencode=arch=compute_61,code=\"sm_61,compute_61\" --use-local-env -ccbin "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.13.26128\bin\HostX86\x64" -x cu  -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2\include"  -G   --keep-dir x64\Debug -maxrregcount=0  --machine 64 --compile -cudart static  -g   -DWIN32 -DWIN64 -D_DEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /Od /FS /Zi /RTC1 /MDd " -o x64\Debug\cuOMT_batched.cu.obj "C:\Users\zz_ro\Dropbox\source\repo\cuOMT\cuOMT\cuOMT_batched.cu" 
+  Compiling CUDA source file main.cu...
+  
+  C:\Users\zz_ro\Dropbox\source\repo\cuOMT\cuOMT>"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2\bin\nvcc.exe" -gencode=arch=compute_30,code=\"sm_30,compute_30\" -gencode=arch=compute_61,code=\"sm_61,compute_61\" --use-local-env -ccbin "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.13.26128\bin\HostX86\x64" -x cu  -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2\include"  -G   --keep-dir x64\Debug -maxrregcount=0  --machine 64 --compile -cudart static  -g   -DWIN32 -DWIN64 -D_DEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /Od /FS /Zi /RTC1 /MDd " -o x64\Debug\cuOMT_simple.cu.obj "C:\Users\zz_ro\Dropbox\source\repo\cuOMT\cuOMT\cuOMT_simple.cu" 
+  
+  C:\Users\zz_ro\Dropbox\source\repo\cuOMT\cuOMT>"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2\bin\nvcc.exe" -gencode=arch=compute_30,code=\"sm_30,compute_30\" -gencode=arch=compute_61,code=\"sm_61,compute_61\" --use-local-env -ccbin "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.13.26128\bin\HostX86\x64" -x cu  -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2\include"  -G   --keep-dir x64\Debug -maxrregcount=0  --machine 64 --compile -cudart static  -g   -DWIN32 -DWIN64 -D_DEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /Od /FS /Zi /RTC1 /MDd " -o x64\Debug\main.cu.obj "C:\Users\zz_ro\Dropbox\source\repo\cuOMT\cuOMT\main.cu" 
+  main.cu
+C:/Users/zz_ro/Dropbox/source/repo/cuOMT/cuOMT/main.cu(64): warning C4305: 'argument': truncation from 'double' to 'const float'
+  cuOMT_batched.cu
+  cuOMT_simple.cu
+C:/Users/zz_ro/Dropbox/source/repo/cuOMT/cuOMT/cuOMT_simple.cu(307): warning C4244: 'argument': conversion from 'int' to 'const float', possible loss of data
+C:/Users/zz_ro/Dropbox/source/repo/cuOMT/cuOMT/cuOMT_simple.cu(335): warning C4244: 'argument': conversion from 'double' to 'const float', possible loss of data
+C:/Users/zz_ro/Dropbox/source/repo/cuOMT/cuOMT/cuOMT_simple.cu(510): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+  C:/Users/zz_ro/Dropbox/source/repo/cuOMT/cuOMT/cuOMT_simple.cu(94): note: see reference to function template instantiation 'void cuOMT_simple::_set_from_csv<float>(const char *,T *,int,int)' being compiled
+          with
+          [
+              T=float
+          ]
+C:/Users/zz_ro/Dropbox/source/repo/cuOMT/cuOMT/cuOMT_simple.cu(420): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+  C:/Users/zz_ro/Dropbox/source/repo/cuOMT/cuOMT/cuOMT_simple.cu(273): note: see reference to function template instantiation 'void cuOMT_simple::dense_histogram<thrust::device_vector<int,thrust::device_malloc_allocator<int>>,thrust::device_vector<float,thrust::device_malloc_allocator<float>>>(Vector1 &,Vector2 &)' being compiled
+          with
+          [
+              Vector1=thrust::device_vector<int,thrust::device_malloc_allocator<int>>,
+              Vector2=thrust::device_vector<float,thrust::device_malloc_allocator<float>>
+          ]
+C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2\include\thrust/system/cuda/detail/reduce.h(947): warning C4244: 'argument': conversion from 'size_type' to 'int', possible loss of data
+  C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2\include\thrust/system/cuda/detail/transform_reduce.h(58): note: see reference to function template instantiation 'T thrust::cuda_cub::reduce_n<thrust::cuda_cub::tag,transformed_iterator_t,size_type,T,ReduceOp>(thrust::cuda_cub::execution_policy<thrust::cuda_cub::tag> &,InputIt,Size,T,BinaryOp)' being compiled
+          with
+          [
+              T=int,
+              ReduceOp=thrust::plus<float>,
+              InputIt=transformed_iterator_t,
+              Size=size_type,
+              BinaryOp=thrust::plus<float>
+          ]
+  C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2\include\thrust/detail/transform_reduce.inl(47): note: see reference to function template instantiation 'T thrust::cuda_cub::transform_reduce<thrust::cuda_cub::tag,InputIterator,UnaryFunction,OutputType,BinaryFunction>(thrust::cuda_cub::execution_policy<thrust::cuda_cub::tag> &,InputIt,InputIt,TransformOp,T,ReduceOp)' being compiled
+          with
+          [
+              T=int,
+              InputIterator=thrust::detail::normal_iterator<thrust::device_ptr<float>>,
+              UnaryFunction=axpb<float>,
+              OutputType=int,
+              BinaryFunction=thrust::plus<float>,
+              InputIt=thrust::detail::normal_iterator<thrust::device_ptr<float>>,
+              TransformOp=axpb<float>,
+              ReduceOp=thrust::plus<float>
+          ]
+  C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2\include\thrust/detail/transform_reduce.inl(67): note: see reference to function template instantiation 'OutputType thrust::transform_reduce<DerivedPolicy,InputIterator,UnaryFunction,OutputType,BinaryFunction>(const thrust::detail::execution_policy_base<DerivedPolicy> &,InputIterator,InputIterator,UnaryFunction,OutputType,BinaryFunction)' being compiled
+          with
+          [
+              OutputType=int,
+              DerivedPolicy=thrust::cuda_cub::tag,
+              InputIterator=thrust::detail::normal_iterator<thrust::device_ptr<float>>,
+              UnaryFunction=axpb<float>,
+              BinaryFunction=thrust::plus<float>
+          ]
+  C:/Users/zz_ro/Dropbox/source/repo/cuOMT/cuOMT/cuOMT_simple.cu(307): note: see reference to function template instantiation 'OutputType thrust::transform_reduce<thrust::detail::normal_iterator<thrust::device_ptr<T>>,axpb<T>,int,thrust::plus<T>>(InputIterator,InputIterator,UnaryFunction,OutputType,BinaryFunction)' being compiled
+          with
+          [
+              OutputType=int,
+              T=float,
+              InputIterator=thrust::detail::normal_iterator<thrust::device_ptr<float>>,
+              UnaryFunction=axpb<float>,
+              BinaryFunction=thrust::plus<float>
+          ]
+C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2\include\thrust/system/cuda/detail/reduce.h(970): warning C4244: 'argument': conversion from 'size_type' to 'int', possible loss of data
+  cuOMT.cu
+C:/Users/zz_ro/Dropbox/source/repo/cuOMT/cuOMT/cuOMT.cu(865): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+  C:/Users/zz_ro/Dropbox/source/repo/cuOMT/cuOMT/cuOMT.cu(208): note: see reference to function template instantiation 'void cuOMT::_set_from_csv<float>(const char *,T *,int,int)' being compiled
+          with
+          [
+              T=float
+          ]
+C:/Users/zz_ro/Dropbox/source/repo/cuOMT/cuOMT/cuOMT.cu(653): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+  C:/Users/zz_ro/Dropbox/source/repo/cuOMT/cuOMT/cuOMT.cu(470): note: see reference to function template instantiation 'void cuOMT::dense_histogram<thrust::device_vector<int,thrust::device_malloc_allocator<int>>,thrust::device_vector<float,thrust::device_malloc_allocator<float>>>(Vector1 &,Vector2 &)' being compiled
+          with
+          [
+              Vector1=thrust::device_vector<int,thrust::device_malloc_allocator<int>>,
+              Vector2=thrust::device_vector<float,thrust::device_malloc_allocator<float>>
+          ]
+C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2\include\thrust/system/cuda/detail/reduce.h(947): warning C4244: 'argument': conversion from 'size_type' to 'int', possible loss of data
+  C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2\include\thrust/system/cuda/detail/reduce.h(1010): note: see reference to function template instantiation 'T thrust::cuda_cub::reduce_n<thrust::cuda_cub::tag,InputIt,size_type,T,BinaryOp>(thrust::cuda_cub::execution_policy<thrust::cuda_cub::tag> &,InputIt,Size,T,BinaryOp)' being compiled
+          with
+          [
+              T=float,
+              InputIt=thrust::detail::normal_iterator<thrust::device_ptr<float>>,
+              BinaryOp=mean,
+              Size=size_type
+          ]
+  C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2\include\thrust/detail/reduce.inl(71): note: see reference to function template instantiation 'T thrust::cuda_cub::reduce<thrust::cuda_cub::tag,InputIterator,T,BinaryFunction>(thrust::cuda_cub::execution_policy<thrust::cuda_cub::tag> &,InputIt,InputIt,T,BinaryOp)' being compiled
+          with
+          [
+              T=float,
+              InputIterator=thrust::detail::normal_iterator<thrust::device_ptr<float>>,
+              BinaryFunction=mean,
+              InputIt=thrust::detail::normal_iterator<thrust::device_ptr<float>>,
+              BinaryOp=mean
+          ]
+  C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2\include\thrust/detail/reduce.inl(186): note: see reference to function template instantiation 'T thrust::reduce<DerivedPolicy,InputIterator,T,BinaryFunction>(const thrust::detail::execution_policy_base<DerivedPolicy> &,InputIterator,InputIterator,T,BinaryFunction)' being compiled
+          with
+          [
+              T=float,
+              DerivedPolicy=thrust::cuda_cub::tag,
+              InputIterator=thrust::detail::normal_iterator<thrust::device_ptr<float>>,
+              BinaryFunction=mean
+          ]
+  C:/Users/zz_ro/Dropbox/source/repo/cuOMT/cuOMT/cuOMT.cu(522): note: see reference to function template instantiation 'T thrust::reduce<thrust::detail::normal_iterator<thrust::device_ptr<T>>,float,mean>(InputIterator,InputIterator,T,BinaryFunction)' being compiled
+          with
+          [
+              T=float,
+              InputIterator=thrust::detail::normal_iterator<thrust::device_ptr<float>>,
+              BinaryFunction=mean
+          ]
+C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2\include\thrust/system/cuda/detail/reduce.h(970): warning C4244: 'argument': conversion from 'size_type' to 'int', possible loss of data
+     Creating library C:\Users\zz_ro\Dropbox\source\repo\cuOMT\x64\Debug\cuOMT.lib and object C:\Users\zz_ro\Dropbox\source\repo\cuOMT\x64\Debug\cuOMT.exp
+cuOMT.cu.obj : error LNK2019: unresolved external symbol cublasCreate_v2 referenced in function "public: int __cdecl cuOMT::gd_init(int,char * * const)" (?gd_init@cuOMT@@QEAAHHQEAPEAD@Z)
+cuOMT_simple.cu.obj : error LNK2001: unresolved external symbol cublasCreate_v2
+cuOMT.cu.obj : error LNK2019: unresolved external symbol cublasDestroy_v2 referenced in function "public: int __cdecl cuOMT::gd_clean(void)" (?gd_clean@cuOMT@@QEAAHXZ)
+cuOMT_simple.cu.obj : error LNK2001: unresolved external symbol cublasDestroy_v2
+cuOMT.cu.obj : error LNK2019: unresolved external symbol cublasGetVector referenced in function "public: void __cdecl cuOMT::_get_to_csv<float>(char const *,float *,int,int)" (??$_get_to_csv@M@cuOMT@@QEAAXPEBDPEAMHH@Z)
+cuOMT_simple.cu.obj : error LNK2001: unresolved external symbol cublasGetVector
+cuOMT.cu.obj : error LNK2019: unresolved external symbol cublasSgemm_v2 referenced in function "protected: int __cdecl cuOMT::compute_knn(struct cublasContext * &,float *,float *,int,int,int,float *,float *,float *,int *,int *,int *,int *,float const *,float const *,float const *,float const *,int *,int *,int,int *,int *)" (?compute_knn@cuOMT@@IEAAHAEAPEAUcublasContext@@PEAM1HHH111PEAH222PEBM33322H22@Z)
+cuOMT_simple.cu.obj : error LNK2001: unresolved external symbol cublasSgemm_v2
+cuOMT.cu.obj : error LNK2019: unresolved external symbol cublasSgeam referenced in function "protected: int __cdecl cuOMT::compute_knn(struct cublasContext * &,float *,float *,int,int,int,float *,float *,float *,int *,int *,int *,int *,float const *,float const *,float const *,float const *,int *,int *,int,int *,int *)" (?compute_knn@cuOMT@@IEAAHAEAPEAUcublasContext@@PEAM1HHH111PEAH222PEBM33322H22@Z)
+cuOMT.cu.obj : error LNK2019: unresolved external symbol curandCreateGenerator referenced in function "protected: int __cdecl cuOMT::GPU_generate_RNM(float *,int,int,unsigned int)" (?GPU_generate_RNM@cuOMT@@IEAAHPEAMHHI@Z)
+cuOMT.cu.obj : error LNK2019: unresolved external symbol curandSetPseudoRandomGeneratorSeed referenced in function "protected: int __cdecl cuOMT::GPU_generate_RNM(float *,int,int,unsigned int)" (?GPU_generate_RNM@cuOMT@@IEAAHPEAMHHI@Z)
+cuOMT.cu.obj : error LNK2019: unresolved external symbol curandGenerateUniform referenced in function "protected: int __cdecl cuOMT::GPU_generate_RNM(float *,int,int,unsigned int)" (?GPU_generate_RNM@cuOMT@@IEAAHPEAMHHI@Z)
+C:\Users\zz_ro\Dropbox\source\repo\cuOMT\x64\Debug\cuOMT.exe : fatal error LNK1120: 8 unresolved externals
