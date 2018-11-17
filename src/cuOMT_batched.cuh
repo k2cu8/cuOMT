@@ -1,5 +1,6 @@
 #include "cuOMT_simple.cuh"
 
+
 class cuOMT_batched : public cuOMT_simple
 {
 protected:
@@ -31,4 +32,7 @@ public:
 
 	// run batched gradient descent
 	void run_bat_gd(int argc, char* argv[]);
+
+    // run dynamic batched gradient descent, st. number of monte carlo samples are added when convergence rate is low
+    void run_dyn_bat_gd(int argc, char* argv[]);
 };

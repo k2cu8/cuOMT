@@ -70,7 +70,10 @@ struct delta_h
 	__host__ __device__
 		float operator () (const float &g, const float &cache) const
 	{
-		return -lr * g / sqrt(cache);
+        if (cache != 0)
+            return -lr * g / sqrt(cache);
+        else
+            return 0;
 	}
 };
 

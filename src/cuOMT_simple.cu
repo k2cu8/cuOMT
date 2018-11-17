@@ -1,4 +1,5 @@
 #include "cuOMT_simple.cuh"
+#include <curand.h>
 
 
 int cuOMT_simple::GPU_generate_RNM(float* P, const int nRowP, const int nColP)
@@ -25,6 +26,65 @@ int cuOMT_simple::GPU_generate_RNM(float* P, const int nRowP, const int nColP, f
 	return 0;
 }
 
+int cuOMT_simple::curand_RNG_sobol(float* P, const int nRowP, const int nColP, unsigned long long offset)
+{
+    using namespace std;
+    curandStatus_t curandResult;
+    curandGenerator_t qrng;
+
+    curandResult = curandCreateGenerator(&qrng, CURAND_RNG_QUASI_SCRAMBLED_SOBOL32);
+    if (curandResult != CURAND_STATUS_SUCCESS)
+    {
+        string msg("Could not create quasi-random number generator: ");
+        msg += curandResult;
+        throw std::runtime_error(msg);
+    }
+
+    curandResult = curandSetQuasiRandomGeneratorDimensions(qrng, nColP);
+    if (curandResult != CURAND_STATUS_SUCCESS)
+    {
+        string msg("Could not set number of dimensions for quasi-random number generator: ");
+        msg += curandResult;
+        throw std::runtime_error(msg);
+    }
+
+    curandResult = curandSetGeneratorOrdering(qrng, CURAND_ORDERING_QUASI_DEFAULT);
+    if (curandResult != CURAND_STATUS_SUCCESS)
+    {
+        string msg("Could not set order for quasi-random number generator: ");
+        msg += curandResult;
+        throw std::runtime_error(msg);
+    }
+
+    curandResult = curandSetGeneratorOffset(qrng, offset);
+    if (curandResult != CURAND_STATUS_SUCCESS)
+    {
+        string msg("Could not set offset for quasi-random number generator: ");
+        msg += curandResult;
+        throw std::runtime_error(msg);
+    }
+
+    curandResult = curandGenerateUniform(qrng, P, nRowP * nColP);
+    if (curandResult != CURAND_STATUS_SUCCESS)
+    {
+        string msg("Could not generate quasi-random numbers: ");
+        msg += curandResult;
+        throw std::runtime_error(msg);
+    }
+
+    curandResult = curandDestroyGenerator(qrng);
+    if (curandResult != CURAND_STATUS_SUCCESS)
+    {
+        string msg("Could not destroy quasi-random number generator: ");
+        msg += curandResult;
+        throw std::runtime_error(msg);
+    }
+
+    thrust::device_ptr<float> P_ptr(P);
+    thrust::transform(P_ptr, P_ptr + nRowP * nColP, P_ptr, axpb<float>(1, -0.5));
+
+    return 0;
+}
 
 int cuOMT_simple::gd_init(int argc, char* argv[])
 {
@@ -115,7 +175,7 @@ int cuOMT_simple::gd_init(int argc, char* argv[])
 	{
 		/*_set_random_parameter(d_P, numP, dim);
 		thrust::transform(d_P_ptr, d_P_ptr + numP * dim, d_P_ptr, axpb<float>(1, -0.5));*/
-		GPU_generate_RNM(d_P, numP, dim, -50.0f, 50.0f);
+		GPU_generate_RNM(d_P, numP, dim, -0.5f, 0.5f);
 
 		/*std::cout << "d_P: " << std::endl;
 		thrust::copy(d_P_ptr, d_P_ptr+numP*dim, std::ostream_iterator<float>(std::cout, " "));
@@ -218,7 +278,7 @@ int cuOMT_simple::gd_pre_calc()
 
 	// fill volP with random numbers
 	
-	GPU_generate_RNM(d_volP, voln, dim, -50.0f, 50.0f);
+	GPU_generate_RNM(d_volP, voln, dim, -.5f, .5f);
 	// or fill volP with RAM stored numbers
 
 
@@ -287,13 +347,17 @@ int cuOMT_simple::gd_calc_measure()
 int cuOMT_simple::gd_update_h()
 {
 	// subtract current cell measures with target ones
-	thrust::transform(d_g.begin(), d_g.end(), d_A.begin(), d_g.begin(), axmy<float>(100.0f / voln));
+	thrust::transform(d_g.begin(), d_g.end(), d_A.begin(), d_g.begin(), axmy<float>(1.0f / voln));
 
 	/*update h from g*/
+#ifdef USE_FANCY_GD
 	thrust::transform(thrust::device, d_cache_ptr, d_cache_ptr + numP, d_g.begin(), d_cache_ptr, update_cache<float>());
 	thrust::transform(thrust::device, d_g.begin(), d_g.end(), d_cache_ptr, d_delta_h.begin(), delta_h(lr));
 	thrust::transform(thrust::device, d_h.begin(), d_h.begin() + numP, d_delta_h.begin(), d_h.begin(), thrust::plus<float>());
-
+#else
+    thrust::transform(thrust::device, d_g.begin(), d_g.end(), d_delta_h.begin(), axpb<float>(-lr, 0));
+    thrust::transform(thrust::device, d_h.begin(), d_h.begin() + numP, d_delta_h.begin(), d_h.begin(), thrust::plus<float>());
+#endif
 	/*std::cout << "d_delta_h: " << std::endl;
 	thrust::copy(d_delta_h.begin(), d_delta_h.begin() + 20, std::ostream_iterator<float>(std::cout, " "));
 	std::cout << std::endl;*/
@@ -332,7 +396,7 @@ void cuOMT_simple::write_pushed_mu(const char* output)
 {
 	// calculate histogram
 	dense_histogram(d_ind, d_g);
-	thrust::transform(d_g.begin(), d_g.end(), d_g.begin(), axpb<float>(100.0 / voln, 0));
+	thrust::transform(d_g.begin(), d_g.end(), d_g.begin(), axpb<float>(1.0f / voln, 0));
 
 	_get_to_csv(output, thrust::raw_pointer_cast(&d_g[0]), 1, numP);
 }

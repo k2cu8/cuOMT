@@ -24,10 +24,9 @@
 #include <fstream>      // std::ifstream
 #include <sstream> 
 
-//#include "histogram.cuh"
-//#include "knn.cuh"
 #include "OMT_functors.cuh"
 
+#define USE_FANCY_GD
 class cuOMT_simple
 {
 protected:
@@ -122,6 +121,9 @@ protected:
 
 	/*random matrix generation, each element uniformly sampled between [a,b]*/
 	int GPU_generate_RNM(float* P, const int nRowP, const int nColP, float lower_b, float upper_b);
+
+    /*generate sobol sequence*/
+    int curand_RNG_sobol(float* P, const int nRowP, const int nColP, unsigned long long offset);
 
 	/*debugging functions*/
 	std::stack<clock_t> tictoc_stack;
