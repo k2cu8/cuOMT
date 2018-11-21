@@ -1,5 +1,6 @@
 #include "cuOMT_simple.cuh"
 #include <curand.h>
+#include <iomanip>
 
 
 int cuOMT_simple::GPU_generate_RNM(float* P, const int nRowP, const int nColP)
@@ -154,6 +155,7 @@ int cuOMT_simple::gd_init(int argc, char* argv[])
 			_set_from_csv<float>(argv[i + 1], d_P, numP, dim);
 			set_P = true;
 
+            std::cout << "Read P successfully." << std::endl;
 			/*std::cout << "d_P: " << std::endl;
 			thrust::copy(d_P_ptr, d_P_ptr + 20, std::ostream_iterator<float>(std::cout, " "));
 			std::cout << std::endl;*/
@@ -163,11 +165,15 @@ int cuOMT_simple::gd_init(int argc, char* argv[])
 		{
 			_set_from_csv<float>(argv[i + 1], thrust::raw_pointer_cast(&d_A[0]), numP, 1);
 			set_A = true;
+
+            std::cout << "Read target measure successfully." << std::endl;
 		}
 		if (strcmp(argv[i], "-h") == 0)
 		{
 			_set_from_csv<float>(argv[i + 1], thrust::raw_pointer_cast(&d_h[0]), numP, 1);
 			set_h = true;
+
+            std::cout << "Read initial h successfully." << std::endl;
 		}
 
 	}
@@ -257,18 +263,6 @@ int cuOMT_simple::gd_init(int argc, char* argv[])
 
 	tic();
 
-	// set initial h to be -0.5*|Pi|^2
-	thrust::device_vector<int> d_numP_dim_stride(numP * dim);
-	thrust::copy(d_cellId.begin(), d_cellId.begin() + numP * dim, d_numP_dim_stride.begin());
-	thrust::device_vector<float> d_P_data(numP * dim);
-	thrust::copy(d_P_ptr, d_P_ptr + numP * dim, d_P_data.begin());
-
-	thrust::transform(d_P_data.begin(), d_P_data.end(), d_P_data.begin(), square<float>());
-	thrust::sort_by_key(d_numP_dim_stride.begin(), d_numP_dim_stride.end(), d_P_data.begin());
-	thrust::reduce_by_key(d_numP_dim_stride.begin(), d_numP_dim_stride.end(), d_P_data.begin(), d_knn_dummy_key.begin(), d_h.begin());
-
-	thrust::transform(d_h.begin(), d_h.begin() + numP, d_h.begin(), axpb<float>(-0.5, 0));
-
 	return 0;
 }
 
@@ -355,22 +349,25 @@ int cuOMT_simple::gd_update_h()
 	thrust::transform(thrust::device, d_g.begin(), d_g.end(), d_cache_ptr, d_delta_h.begin(), delta_h(lr));
 	thrust::transform(thrust::device, d_h.begin(), d_h.begin() + numP, d_delta_h.begin(), d_h.begin(), thrust::plus<float>());
 #else
-    thrust::transform(thrust::device, d_g.begin(), d_g.end(), d_delta_h.begin(), axpb<float>(-lr, 0));
+    thrust::transform(thrust::device, d_g.begin(), d_g.end(), d_delta_h.begin(), axpb<float>(-lr, 0.0f));
     thrust::transform(thrust::device, d_h.begin(), d_h.begin() + numP, d_delta_h.begin(), d_h.begin(), thrust::plus<float>());
 #endif
 	/*std::cout << "d_delta_h: " << std::endl;
 	thrust::copy(d_delta_h.begin(), d_delta_h.begin() + 20, std::ostream_iterator<float>(std::cout, " "));
-	std::cout << std::endl;*/
+	std::cout << std::endl;
 
-	/*std::cout << "d_h: " << std::endl;
+	std::cout << "d_h: " << std::endl;
 	thrust::copy(d_h.begin(), d_h.begin() + 20, std::ostream_iterator<float>(std::cout, " "));
 	std::cout << std::endl;*/
 
 	/*normalize h*/
 	//thrust::transform(d_h.begin(), d_h.end(), d_h.begin(), axpb<float>(1, -thrust::reduce(d_h.begin(), d_h.end(), 0.0f, mean(numP))));
-	thrust::transform(d_h.begin(), d_h.end(), d_h.begin(), axpb<float>(1, thrust::transform_reduce(d_h.begin(), d_h.end(), axpb<float>(-1 / (float)numP, 0), 0, thrust::plus<float>())));
+	thrust::transform(d_h.begin(), d_h.end(), d_h.begin(), axpb<float>(1.0f, thrust::transform_reduce(d_h.begin(), d_h.end(), axpb<float>(-1.0f / (float)numP, 0.0f), 0.0f, thrust::plus<float>())));
 
-	/*std::cout << "normalised d_h: " << std::endl;
+    /*std::cout << "1/numP:"<<1 / (float)numP << std::endl;
+    std::cout << "mean h:" << thrust::transform_reduce(d_h.begin(), d_h.end(), axpb<float>(-1 / (float)numP, 0.0f), 0.0f, thrust::plus<float>()) << std::endl;
+
+	std::cout << "normalised d_h: " << std::endl;
 	thrust::copy(d_h.begin(), d_h.begin() + 20, std::ostream_iterator<float>(std::cout, " "));
 	std::cout << std::endl;*/
 
@@ -519,9 +516,9 @@ void cuOMT_simple::print_matrix_csv(T* A, int nr_rows_A, int nr_cols_A, const ch
 	for (int i = 0; i < nr_rows_A; ++i) {
 		for (int j = 0; j < nr_cols_A; ++j) {
 			if (j != nr_cols_A - 1)
-				file << A[j * nr_rows_A + i] << ",";
+				file << std::setprecision(20) << A[j * nr_rows_A + i] << ",";
 			else
-				file << A[j * nr_rows_A + i] << "\n";
+				file << std::setprecision(20) << A[j * nr_rows_A + i] << "\n";
 		}
 	}
 	file.close();

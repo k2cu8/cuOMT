@@ -152,7 +152,8 @@ void cuOMT_batched::run_dyn_bat_gd(int argc, char* argv[])
         file << d_g_norm[0] << ",";
 
         // record best norm
-        if (d_g_norm[0] < best_g_norm)
+        //if (d_g_norm[0] < best_g_norm)
+        if (steps%500 == 0)
         {
             std::string output_h = std::string("h/") + std::to_string(steps) + std::string(".csv");
             write_h(output_h.c_str());

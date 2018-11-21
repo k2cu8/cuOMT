@@ -62,12 +62,12 @@ int main(int argc, char* argv[]) {
 
 	/*----cuOMT_batched main----*/
     const int dim = 100;
-    const int num_cell = 100000;
-    const int num_MC_sample = 4000;
-    const int max_iter = 10000;
+    const int num_cell = 8000;
+    const int num_MC_sample = 30000;
+    const int max_iter = 60000;
     const double eps = 0.02 * (1 / ((float)num_cell));
     const double lr = 0.08;
-    const int num_batch = 1;
+    const int num_batch = 10;
 	cuOMT_batched batched_omt(dim, num_cell, num_MC_sample, max_iter, eps, lr, num_batch);
 	batched_omt.run_dyn_bat_gd(argc, argv);
 	return 0;
