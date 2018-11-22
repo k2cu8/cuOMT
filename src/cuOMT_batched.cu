@@ -60,6 +60,15 @@ int cuOMT_batched::gd_bat_pre_calc(int count)
 	return 0;
 }
 
+void cuOMT_batched::write_dyn_pushed_mu(const char* output, int nb)
+{
+    // calculate histogram
+    thrust::transform(d_g_sum.begin(), d_g_sum.end(), d_g_sum.begin(), axpb<float>(1.0f / (voln*nb), 0));
+
+    _get_to_csv(output, thrust::raw_pointer_cast(&d_g_sum[0]), 1, numP);
+}
+
+
 void cuOMT_batched::run_bat_gd(int argc, char* argv[])
 {
 	// 1.initiliaze
@@ -152,12 +161,20 @@ void cuOMT_batched::run_dyn_bat_gd(int argc, char* argv[])
         file << d_g_norm[0] << ",";
 
         // record best norm
-        //if (d_g_norm[0] < best_g_norm)
-        if (steps%500 == 0)
+        if (d_g_norm[0] < best_g_norm)
+        //if (true)
         {
             std::string output_h = std::string("h/") + std::to_string(steps) + std::string(".csv");
             write_h(output_h.c_str());
 
+            std::string output_mu = std::string("pushed_mu/") + std::to_string(steps) + std::string(".csv");
+            write_dyn_pushed_mu(output_mu.c_str(),dyn_numBat);
+#ifdef USE_FANCY_GD
+            std::string output_adam_m = std::string("adam_m/") + std::to_string(steps) + std::string(".csv");
+            write_adam_m(output_adam_m.c_str());
+            std::string output_adam_v = std::string("adam_v/") + std::to_string(steps) + std::string(".csv");
+            write_adam_v(output_adam_v.c_str());
+#endif
             best_g_norm = d_g_norm[0];
         }
         
@@ -170,7 +187,7 @@ void cuOMT_batched::run_dyn_bat_gd(int argc, char* argv[])
         else
             count_bad_iter++;
 
-        if (count_bad_iter > 5)
+        if (count_bad_iter > 20)
         {
             dyn_numBat *= 2;
             std::cout << "(MC samples amounts increased to " << std::to_string(dyn_numBat * voln) << "...)" << std::endl;

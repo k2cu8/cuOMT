@@ -99,6 +99,43 @@ struct update_cache
 
 };
 
+template <typename T>
+struct update_adam_m
+{
+    const float beta1;
+    update_adam_m(const float _beta1) : beta1(_beta1) {}
+    __host__ __device__
+        T operator()(const T &m, const T &g) const
+    {
+        return beta1*m + (1-beta1) * g;
+    }
+
+};
+
+template <typename T>
+struct update_adam_v
+{
+    const float beta2;
+    update_adam_v(const float _beta2) : beta2(_beta2) {}
+    __host__ __device__
+        T operator()(const T &v, const T &g) const
+    {
+        return beta2 * v + (1 - beta2) * g * g;
+    }
+
+};
+
+struct adam_delta_h
+{
+    const float lr;
+    adam_delta_h(const float _lr) : lr(_lr) {}
+    __host__ __device__
+        float operator () (const float &m, const float &v) const
+    {
+        return -lr * m / (sqrt(v) + 1e-8);
+    }
+};
+
 struct find_max
 {
 	__host__ __device__

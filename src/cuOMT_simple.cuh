@@ -1,3 +1,5 @@
+//Various gradient descent methods can be found at: http://cs231n.github.io/neural-networks-3/
+
 #include <cublas_v2.h>
 #include <curand.h>
 
@@ -44,10 +46,16 @@ protected:
 	/*allocate device vectors*/
 	float *d_P;
 	float *d_volP;
-	float *d_cache;
+	
 	float *d_U;
 	float *d_PX;
 	int* d_cellId_numP;
+    
+#ifdef USE_FANCY_GD
+    float *d_cache;
+    float *d_adam_m;
+    float *d_adam_v;
+#endif
 
 	// P
 	thrust::device_ptr<float> d_P_ptr;
@@ -61,10 +69,12 @@ protected:
 
 	// A
 	thrust::device_vector<float> d_A;
-
+#ifdef USE_FANCY_GD
 	// cache
 	thrust::device_ptr<float> d_cache_ptr;
-
+    thrust::device_ptr<float> d_adam_m_ptr;
+    thrust::device_ptr<float> d_adam_v_ptr;
+#endif 
 	// ind
 	thrust::device_vector<int> d_ind;
 	thrust::device_vector<float> d_ind_val;
@@ -160,7 +170,12 @@ public:
 
 	/*output current h*/
 	void write_h(const char* output);
-
+#ifdef USE_FANCY_GD
+    /*output cache*/
+    void write_cache(const char* output);
+    void write_adam_m(const char* output);
+    void write_adam_v(const char* output);
+#endif
 	void write_generated_P(const char* output);
 
 	/*set parameters*/

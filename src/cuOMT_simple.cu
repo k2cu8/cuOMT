@@ -96,10 +96,14 @@ int cuOMT_simple::gd_init(int argc, char* argv[])
 	/*allocate device vectors*/
 	d_P = 0;
 	d_volP = 0;
-	d_cache = 0;
+	
 	d_U = 0;
 	d_PX = 0;
-
+#ifdef USE_FANCY_GD
+    d_cache = 0;
+    d_adam_m = 0;
+    d_adam_v = 0;
+#endif
 
 	printf("cuOMT_simple running...\n");
 
@@ -121,13 +125,25 @@ int cuOMT_simple::gd_init(int argc, char* argv[])
 		fprintf(stderr, "!!!! device memory allocation error (allocate volP)\n");
 		return EXIT_FAILURE;
 	}
-
+#ifdef USE_FANCY_GD
 	if (cudaMalloc((void **)&d_cache, numP * sizeof(d_cache[0])) != cudaSuccess)
 	{
 		fprintf(stderr, "!!!! device memory allocation error (allocate cache)\n");
 		return EXIT_FAILURE;
 	}
 
+    if (cudaMalloc((void **)&d_adam_m, numP * sizeof(d_adam_m[0])) != cudaSuccess)
+    {
+        fprintf(stderr, "!!!! device memory allocation error (allocate d_adam_m)\n");
+        return EXIT_FAILURE;
+    }
+
+    if (cudaMalloc((void **)&d_adam_v, numP * sizeof(d_adam_v[0])) != cudaSuccess)
+    {
+        fprintf(stderr, "!!!! device memory allocation error (allocate d_adam_v)\n");
+        return EXIT_FAILURE;
+    }
+#endif
 	if (cudaMalloc((void **)&d_U, numP * voln * sizeof(d_U[0])) != cudaSuccess)
 	{
 		fprintf(stderr, "!!!! device memory allocation error (U)\n");
@@ -147,7 +163,10 @@ int cuOMT_simple::gd_init(int argc, char* argv[])
 	d_A.resize(numP);
 	d_h.resize(numP);
 
-	bool set_P(false), set_A(false), set_h(false);
+	bool set_P(false), set_A(false), set_h(false), set_cache(false);
+#ifdef USE_FANCY_GD
+    bool set_adam_m(false), set_adam_v(false);
+#endif
 	for (int i = 1; i < argc; ++i)
 	{
 		if (strcmp(argv[i], "-P") == 0)
@@ -156,26 +175,42 @@ int cuOMT_simple::gd_init(int argc, char* argv[])
 			set_P = true;
 
             std::cout << "Read P successfully." << std::endl;
-			/*std::cout << "d_P: " << std::endl;
-			thrust::copy(d_P_ptr, d_P_ptr + 20, std::ostream_iterator<float>(std::cout, " "));
-			std::cout << std::endl;*/
+			
 
 		}
+
 		if (strcmp(argv[i], "-A") == 0)
 		{
-			_set_from_csv<float>(argv[i + 1], thrust::raw_pointer_cast(&d_A[0]), numP, 1);
+			_set_from_csv<float>(argv[i + 1], thrust::raw_pointer_cast(&d_A[0]), 1, numP);
 			set_A = true;
 
             std::cout << "Read target measure successfully." << std::endl;
 		}
+
 		if (strcmp(argv[i], "-h") == 0)
 		{
-			_set_from_csv<float>(argv[i + 1], thrust::raw_pointer_cast(&d_h[0]), numP, 1);
-			set_h = true;
+			_set_from_csv<float>(argv[i + 1], thrust::raw_pointer_cast(&d_h[0]), 1, numP);
+			set_h = true; 
 
             std::cout << "Read initial h successfully." << std::endl;
 		}
+#ifdef USE_FANCY_GD
+        if (strcmp(argv[i], "-adam_m") == 0)
+        {
+            _set_from_csv<float>(argv[i + 1], thrust::raw_pointer_cast(d_adam_m), 1, numP);
+            set_adam_m = true;
 
+            std::cout << "Read initial adam_m successfully." << std::endl;
+        }
+
+        if (strcmp(argv[i], "-adam_v") == 0)
+        {
+            _set_from_csv<float>(argv[i + 1], thrust::raw_pointer_cast(d_adam_v), 1, numP);
+            set_adam_v = true;
+
+            std::cout << "Read initial adam_v successfully." << std::endl;
+        }
+#endif
 	}
 	if (!set_P)
 	{
@@ -193,18 +228,28 @@ int cuOMT_simple::gd_init(int argc, char* argv[])
 	}
 	if (!set_h)
 	{
-		thrust::fill(d_h.begin(), d_h.end(), 0);
+		thrust::fill(d_h.begin(), d_h.end(), 0.0f);
 	}
-
+#ifdef USE_FANCY_GD
+    // cache	
+    if (!set_cache)
+    {
+        d_cache_ptr = thrust::device_pointer_cast(d_cache);
+        thrust::fill(d_cache_ptr, d_cache_ptr + numP, 0.0f);
+    }
+    if (!set_adam_m)
+    {
+        d_adam_m_ptr = thrust::device_pointer_cast(d_adam_m);
+        thrust::fill(d_adam_m_ptr, d_adam_m_ptr + numP, 0.0f);
+    }
+    if (!set_adam_v)
+    {
+        d_adam_v_ptr = thrust::device_pointer_cast(d_adam_v);
+        thrust::fill(d_adam_v_ptr, d_adam_v_ptr + numP, 0.0f);
+    }
+#endif
 	// volP
 	d_volP_ptr = thrust::device_pointer_cast(d_volP);
-
-
-
-
-	// cache	
-	d_cache_ptr = thrust::device_pointer_cast(d_cache);
-	thrust::fill(d_cache_ptr, d_cache_ptr + numP, 0);
 
 	// ind
 	d_ind.resize(voln);
@@ -334,6 +379,8 @@ int cuOMT_simple::gd_calc_measure()
 	thrust::copy(d_g.begin(), d_g.begin() + 20, std::ostream_iterator<float>(std::cout, " "));
 	std::cout << std::endl;*/
 
+    //std::cout << "sum_ind: "<< thrust::reduce(d_g.begin(), d_g.end()) << std::endl;
+
 	return 0;
 }
 
@@ -345,9 +392,13 @@ int cuOMT_simple::gd_update_h()
 
 	/*update h from g*/
 #ifdef USE_FANCY_GD
-	thrust::transform(thrust::device, d_cache_ptr, d_cache_ptr + numP, d_g.begin(), d_cache_ptr, update_cache<float>());
+	/*thrust::transform(thrust::device, d_cache_ptr, d_cache_ptr + numP, d_g.begin(), d_cache_ptr, update_cache<float>());
 	thrust::transform(thrust::device, d_g.begin(), d_g.end(), d_cache_ptr, d_delta_h.begin(), delta_h(lr));
-	thrust::transform(thrust::device, d_h.begin(), d_h.begin() + numP, d_delta_h.begin(), d_h.begin(), thrust::plus<float>());
+	thrust::transform(thrust::device, d_h.begin(), d_h.begin() + numP, d_delta_h.begin(), d_h.begin(), thrust::plus<float>());*/
+    thrust::transform(thrust::device, d_adam_m_ptr, d_adam_m_ptr + numP, d_g.begin(), d_adam_m_ptr, update_adam_m<float>(0.9f));
+    thrust::transform(thrust::device, d_adam_v_ptr, d_adam_v_ptr + numP, d_g.begin(), d_adam_v_ptr, update_adam_v<float>(0.999f));
+    thrust::transform(thrust::device, d_adam_m_ptr, d_adam_m_ptr + numP, d_adam_v_ptr, d_delta_h.begin(), adam_delta_h(lr));
+    thrust::transform(thrust::device, d_h.begin(), d_h.begin() + numP, d_delta_h.begin(), d_h.begin(), thrust::plus<float>());
 #else
     thrust::transform(thrust::device, d_g.begin(), d_g.end(), d_delta_h.begin(), axpb<float>(-lr, 0.0f));
     thrust::transform(thrust::device, d_h.begin(), d_h.begin() + numP, d_delta_h.begin(), d_h.begin(), thrust::plus<float>());
@@ -366,8 +417,8 @@ int cuOMT_simple::gd_update_h()
 
     /*std::cout << "1/numP:"<<1 / (float)numP << std::endl;
     std::cout << "mean h:" << thrust::transform_reduce(d_h.begin(), d_h.end(), axpb<float>(-1 / (float)numP, 0.0f), 0.0f, thrust::plus<float>()) << std::endl;
-
-	std::cout << "normalised d_h: " << std::endl;
+    */
+	/*std::cout << "normalised d_h: " << std::endl;
 	thrust::copy(d_h.begin(), d_h.begin() + 20, std::ostream_iterator<float>(std::cout, " "));
 	std::cout << std::endl;*/
 
@@ -402,7 +453,22 @@ void cuOMT_simple::write_h(const char* output)
 {
 	_get_to_csv(output, thrust::raw_pointer_cast(&d_h[0]), 1, numP);
 }
+#ifdef USE_FANCY_GD
+void cuOMT_simple::write_cache(const char* output)
+{
+    _get_to_csv(output, d_cache, 1, numP);
+}
 
+void cuOMT_simple::write_adam_m(const char* output)
+{
+    _get_to_csv(output, d_adam_m, 1, numP);
+}
+
+void cuOMT_simple::write_adam_v(const char* output)
+{
+    _get_to_csv(output, d_adam_v, 1, numP);
+}
+#endif
 void cuOMT_simple::write_generated_P(const char* output)
 {
 	_get_to_csv(output, d_P, numP, dim);
@@ -430,15 +496,27 @@ int cuOMT_simple::gd_clean(void)
 		return EXIT_FAILURE;
 	}
 
-
+#ifdef USE_FANCY_GD
 	if (cudaFree(d_cache) != cudaSuccess)
 	{
 		fprintf(stderr, "!!!! memory free error (cache)\n");
 		return EXIT_FAILURE;
 	}
 
-	/* shut down*/
+    if (cudaFree(d_adam_m) != cudaSuccess)
+    {
+        fprintf(stderr, "!!!! memory free error (adam_m)\n");
+        return EXIT_FAILURE;
+    }
 
+    if (cudaFree(d_adam_v) != cudaSuccess)
+    {
+        fprintf(stderr, "!!!! memory free error (adam_v)\n");
+        return EXIT_FAILURE;
+    }
+#endif
+
+	/* shut down*/
 	if (cublasDestroy(handle) != CUBLAS_STATUS_SUCCESS)
 	{
 		fprintf(stderr, "!!!! shutdown error (A)\n");
