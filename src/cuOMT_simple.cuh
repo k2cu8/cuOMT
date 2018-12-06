@@ -52,7 +52,6 @@ protected:
 	int* d_cellId_numP;
     
 #ifdef USE_FANCY_GD
-    float *d_cache;
     float *d_adam_m;
     float *d_adam_v;
 #endif
@@ -71,7 +70,6 @@ protected:
 	thrust::device_vector<float> d_A;
 #ifdef USE_FANCY_GD
 	// cache
-	thrust::device_ptr<float> d_cache_ptr;
     thrust::device_ptr<float> d_adam_m_ptr;
     thrust::device_ptr<float> d_adam_v_ptr;
 #endif 
@@ -172,7 +170,6 @@ public:
 	void write_h(const char* output);
 #ifdef USE_FANCY_GD
     /*output cache*/
-    void write_cache(const char* output);
     void write_adam_m(const char* output);
     void write_adam_v(const char* output);
 #endif
