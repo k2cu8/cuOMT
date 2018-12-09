@@ -1,7 +1,8 @@
 /*----OMT with neighbor acceleration algorithm ----*/
 //#include "cuOMT.cuh"
 //#include "cuOMT_simple.cuh"
-#include "cuOMT_batched.cuh"
+//#include "cuOMT_batched.cuh"
+#include "cuOMT_multi_batch.cuh"
 #include <stdlib.h> 
 #include <iostream> 
 #include <conio.h> 
@@ -35,50 +36,30 @@ int main(int argc, char* argv[]) {
 	-------------------------------------------------------------------------------------------------------------------------------
 	*/
 
-	/*float low = -50.0f;
-	float high = 50.0f;
-	long NumberOfSample = 5000000;
-	long length = 3 * NumberOfSample;
-	
-	float *SampleCoord;
-	SampleCoord = new float[length];
-	
-	float r = 0.0f;
-	set<float> Sample;
+	///*----cuOMT_batched main----*/
+ //   const int dim = 100;
+ //   const int num_cell = 100000;
+ //   const int num_MC_sample = 3000;
+ //   const int max_iter = 60000;
+ //   const double eps = 0.02 * (1 / ((float)num_cell));
+ //   const double lr = 0.08;
+ //   const int num_batch = 1;
+	//cuOMT_batched batched_omt(dim, num_cell, num_MC_sample, max_iter, eps, lr, num_batch);
+	//batched_omt.run_dyn_bat_gd(argc, argv);
+	//return 0;
 
-	for (long i = 0; i < 999999; i++)
-	{
-		r = low + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (high - low)));
-		cout << r << endl;
 
-		Sample.insert(r);
-	}
-
-	cout << length<<endl;
-	cout << Sample.size() << endl;
-	int size;
-	cin >> size;
-*/
-
-	/*----cuOMT_batched main----*/
+    /*----cuOMT multi batch main----*/
     const int dim = 100;
-    const int num_cell = 100000;
+    const int num_total_cell = 100000;
+    const int num_cell_batch_size = 10000;
     const int num_MC_sample = 3000;
     const int max_iter = 60000;
-    const double eps = 0.02 * (1 / ((float)num_cell));
+    const double eps = 0.02 * (1 / ((float)num_total_cell));
     const double lr = 0.08;
     const int num_batch = 1;
-	cuOMT_batched batched_omt(dim, num_cell, num_MC_sample, max_iter, eps, lr, num_batch);
-	batched_omt.run_dyn_bat_gd(argc, argv);
-	return 0;
-
-	/*-----main for SAG-----
-	const char* input_P(argv[1]);
-	const int dim(std::stoi(argv[2]));
-	const int batSize(std::stoi(argv[3]));
-	const int numBat(std::stoi(argv[4]));
-	const int maxIter(std::stoi(argv[5]));
-	run_SAG(input_P, dim, batSize, numBat, maxIter);*/
-	
+    cuOMT_multi_batch mul_bat_omt(dim, num_cell_batch_size, num_MC_sample, max_iter, eps, lr, num_batch, num_total_cell);
+    mul_bat_omt.run_cuOMT_mul_bat_gd(argc, argv);
+    return 0;
 }
 

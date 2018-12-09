@@ -12,6 +12,8 @@ protected:
 	//random point pool
 	thrust::host_vector<float> h_rn_pool;
 
+    bool m_use_rn_pool;
+
 protected:
 	/* batch initialization*/
 	int gd_bat_init(int argc, char* argv[]);
@@ -28,7 +30,7 @@ public:
 	cuOMT_batched(const int _dim, const int _numP, const int _voln, const int _maxIter, const float _eps, const float _lr, const int _numBat) :
 		cuOMT_simple(_dim, _numP, _voln, _maxIter, _eps, _lr), numBat(_numBat)
 	{
-		
+        m_use_rn_pool = false;
 	};
 	
 	~cuOMT_batched() {};	

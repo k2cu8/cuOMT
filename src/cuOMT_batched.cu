@@ -34,10 +34,11 @@ int cuOMT_batched::gd_bat_init(int argc, char* argv[])
 			}
 			file.close();
 
-			std::cout << "h_pool: " << std::endl;
+			/*std::cout << "h_pool: " << std::endl;
 			thrust::copy(h_rn_pool.begin(), h_rn_pool.begin() + 20, std::ostream_iterator<float>(std::cout, " "));
-			std::cout << std::endl;
+			std::cout << std::endl;*/
 
+            m_use_rn_pool = true;
 		}
 	}
 	return 0;
@@ -46,7 +47,7 @@ int cuOMT_batched::gd_bat_init(int argc, char* argv[])
 int cuOMT_batched::gd_bat_pre_calc(int count)
 {
 	// fill volP with random numbers
-    if (h_rn_pool.size() == 0)
+    if (!m_use_rn_pool)
     {
         //GPU_generate_RNM(d_volP, voln, dim, -.5f, .5f);
         curand_RNG_sobol(d_volP, voln, dim, count*voln);
