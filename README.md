@@ -1,4 +1,4 @@
-# cuOMT: A CUDA/C++ implementation of Adaptive Monte Carlo Optimal Transport algorithm
+# cuOMT: A CUDA/C++ Implementation of the Adaptive Monte Carlo Optimal Transport Algorithm
 This repository contains **cuOMT**, a CUDA/C++ solver utilizing the Adaptive Monte Carlo Optimal Transport (MC-OT) algorithm. See [here](https://github.com/k2cu8/pyOMT)
  for a PyTorch implementation.
 
