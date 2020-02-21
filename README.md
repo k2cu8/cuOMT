@@ -19,13 +19,15 @@ then map it to the dataset distribution.
 
 The solver in this repository solves a particular class of OT problems, namely the semi-discrete OT problem, where the source distribution is continuous and the target distribution is discrete (i.e. a finite sum of Dirac distributions). In the demo below, the source distribution is the 2-dimensional uniform distribution on the unit square [0,1]^2 and the target distribution consists of 20 Dirac distributions, with each randomly position in the unit square and has mass 1/20. Our goal is to find a mapping, that maps each point in the unit square to one of the 20 target points, such that for each target point, the total mass being mapped to it (viewed as colored regions in the figures below) equals to 1/20. 
 
-![out2](imgs/output2.gif =400x)  ![out2_final](imgs/out2_final.png =400x)
+<!-- ![out2](imgs/output2.gif =400x)  ![out2_final](imgs/out2_final.png =400x) -->
+<img src="imgs/output2.gif" width="400"> <img src="imgs/out2_final.png" width="400">
 
 Figures above illustrate the optimization process (left) and the final result (right). In each iteration, the transported distribution under the *current* calculated transport mapping is displayed, with different colored regions representing masses on different target points. After convergence, approximately 1/20 of the total area of [0,1]^2 is assigned to each target point, and the total distance between each points in [0,1]^2 are their images under the transport mapping is minimal. 
 
 To accelerate the convergence, the Adam gradient descent method is also available. Figures below illustrate its optimization process:
 
-![out1](imgs/output1.gif =400x)  ![out1_final](imgs/out1_final.png =400x)
+<!-- ![out1](imgs/output1.gif =400x)  ![out1_final](imgs/out1_final.png =400x) -->
+<img src="imgs/output1.gif" width="400"> <img src="imgs/out1_final.png" width="400">
 
 As expected, although the convergence path here is different from the previous example, the final result remains the same, because the optimization is convex. 
 
