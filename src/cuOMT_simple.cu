@@ -3,6 +3,7 @@
 #include <iomanip>
 
 
+
 int cuOMT_simple::GPU_generate_RNM(float* P, const int nRowP, const int nColP)
 {
 	int seed = (int)clock();
@@ -82,7 +83,7 @@ int cuOMT_simple::curand_RNG_sobol(float* P, const int nRowP, const int nColP, u
     }
 
     thrust::device_ptr<float> P_ptr(P);
-    thrust::transform(P_ptr, P_ptr + nRowP * nColP, P_ptr, axpb<float>(1, -0.5));
+    thrust::transform(P_ptr, P_ptr + nRowP * nColP, P_ptr, axpb<float>(1, 0.5));
 
     return 0;
 }
@@ -104,7 +105,7 @@ int cuOMT_simple::gd_init(int argc, char* argv[])
     d_adam_v = 0;
 #endif
 
-	printf("cuOMT_simple running...\n");
+	// printf("cuOMT running...\n");
 
 	if (cublasCreate(&handle) != CUBLAS_STATUS_SUCCESS)
 	{
@@ -143,11 +144,6 @@ int cuOMT_simple::gd_init(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 
-	/*if (cudaMalloc((void **)&d_PX, numP * voln * sizeof(d_PX[0])) != cudaSuccess)
-	{
-		fprintf(stderr, "!!!! device memory allocation error (PX)\n");
-		return EXIT_FAILURE;
-	}*/
 
 	/*fill in data*/
 
@@ -192,10 +188,6 @@ int cuOMT_simple::gd_init(int argc, char* argv[])
             _set_from_csv<float>(argv[i + 1], d_adam_m, 1, numP);
             set_adam_m = true;
 
-            /*std::cout << "d_adam_m: " << std::endl;
-            auto m_ptr = thrust::device_pointer_cast(d_adam_m);
-            thrust::copy(m_ptr, m_ptr + 20, std::ostream_iterator<float>(std::cout, " "));
-            std::cout << std::endl;*/
 
             std::cout << "Read initial adam_m successfully." << std::endl;
         }
@@ -205,10 +197,6 @@ int cuOMT_simple::gd_init(int argc, char* argv[])
             _set_from_csv<float>(argv[i + 1], d_adam_v, 1, numP);
             set_adam_v = true;
 
-            /*std::cout << "d_adam_v: " << std::endl;
-            auto v_ptr = thrust::device_pointer_cast(d_adam_v);
-            thrust::copy(v_ptr, v_ptr + 20, std::ostream_iterator<float>(std::cout, " "));
-            std::cout << std::endl;*/
 
             std::cout << "Read initial adam_v successfully." << std::endl;
         }
@@ -220,9 +208,6 @@ int cuOMT_simple::gd_init(int argc, char* argv[])
 		thrust::transform(d_P_ptr, d_P_ptr + numP * dim, d_P_ptr, axpb<float>(1, -0.5));*/
 		GPU_generate_RNM(d_P, numP, dim, -0.5f, 0.5f);
 
-		/*std::cout << "d_P: " << std::endl;
-		thrust::copy(d_P_ptr, d_P_ptr+numP*dim, std::ostream_iterator<float>(std::cout, " "));
-		std::cout << std::endl;*/
 	}
 	if (!set_A)
 	{
@@ -261,7 +246,7 @@ int cuOMT_simple::gd_init(int argc, char* argv[])
 	d_g_norm.resize(1);
 
 	d_U_ptr = thrust::device_pointer_cast(d_U);
-	//d_PX_ptr = thrust::device_pointer_cast(d_PX);
+
 	d_delta_h.resize(numP);
 
 	// loop parameters
@@ -312,28 +297,7 @@ int cuOMT_simple::gd_pre_calc()
 	// fill volP with random numbers
 	
 	GPU_generate_RNM(d_volP, voln, dim, -.5f, .5f);
-	// or fill volP with RAM stored numbers
 
-
-
-	/*std::cout << "d_volP: " << std::endl;
-	thrust::copy(d_volP_ptr, d_volP_ptr+20*dim, std::ostream_iterator<float>(std::cout, " "));
-	std::cout << std::endl;*/
-
-
-
-	// calculate PX
-	/*if (cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_T, numP, voln, dim, alpha, d_P, numP, d_volP, voln, zero, d_PX, numP) != CUBLAS_STATUS_SUCCESS)
-	{
-		fprintf(stderr, "!!!! Device matrix multiplication error (U <- PX)\n");
-		return EXIT_FAILURE;
-	}*/
-
-	/*std::cout << "d_PX: " << std::endl;
-	thrust::copy(d_PX_ptr, d_PX_ptr + 20, std::ostream_iterator<float>(std::cout, " "));
-	std::cout << std::endl;*/
-
-	//std::cout << "Pre-computing takes " << toc() << "s..." << std::endl;
 	return 0;
 }
 
@@ -342,9 +306,6 @@ int cuOMT_simple::gd_calc_measure()
 	// duplicate h, i.e repmat(h, [voln 1])
 	thrust::gather(d_numP_voln_rep_ptr, d_numP_voln_rep_ptr + numP*voln, d_h.begin(), d_U_ptr);
 
-	/*std::cout << "d_H: " << std::endl;
-	thrust::copy(d_U_ptr, d_U_ptr + 20, std::ostream_iterator<float>(std::cout, " "));
-	std::cout << std::endl;*/
 
 	// PX+H
 	//thrust::transform(d_U_ptr, d_U_ptr + numP * voln, d_PX_ptr, d_U_ptr, thrust::plus<float>());
@@ -354,9 +315,6 @@ int cuOMT_simple::gd_calc_measure()
 		return EXIT_FAILURE;
 	}
 
-	/*std::cout << "d_U: " << std::endl;
-	thrust::copy(d_U_ptr, d_U_ptr + 20, std::ostream_iterator<float>(std::cout, " "));
-	std::cout << std::endl;*/
 
 	// find max parallelly
 	thrust::reduce_by_key(thrust::device, d_sampleId.begin(), d_sampleId.begin() + numP * voln, thrust::make_zip_iterator(thrust::make_tuple(d_cellId.begin(), d_U_ptr)), d_voln_key.begin(),
@@ -365,15 +323,6 @@ int cuOMT_simple::gd_calc_measure()
 	// calculate histogram
 	dense_histogram(d_ind, d_g);
 
-	/*std::cout << "d_ind: " << std::endl;
-	thrust::copy(d_ind.begin(), d_ind.begin() + 20, std::ostream_iterator<int>(std::cout, " "));
-	std::cout << std::endl;
-
-	std::cout << "d_g: " << std::endl;
-	thrust::copy(d_g.begin(), d_g.begin() + 20, std::ostream_iterator<float>(std::cout, " "));
-	std::cout << std::endl;*/
-
-    //std::cout << "sum_ind: "<< thrust::reduce(d_g.begin(), d_g.end()) << std::endl;
 
 	return 0;
 }
@@ -394,33 +343,14 @@ int cuOMT_simple::gd_update_h()
     thrust::transform(thrust::device, d_g.begin(), d_g.end(), d_delta_h.begin(), axpb<float>(-lr, 0.0f));
     thrust::transform(thrust::device, d_h.begin(), d_h.begin() + numP, d_delta_h.begin(), d_h.begin(), thrust::plus<float>());
 #endif
-	/*std::cout << "d_delta_h: " << std::endl;
-	thrust::copy(d_delta_h.begin(), d_delta_h.begin() + 20, std::ostream_iterator<float>(std::cout, " "));
-	std::cout << std::endl;
 
-	std::cout << "d_h: " << std::endl;
-	thrust::copy(d_h.begin(), d_h.begin() + 20, std::ostream_iterator<float>(std::cout, " "));
-	std::cout << std::endl;*/
-
-	/*normalize h*/
-	//thrust::transform(d_h.begin(), d_h.end(), d_h.begin(), axpb<float>(1, -thrust::reduce(d_h.begin(), d_h.end(), 0.0f, mean(numP))));
 	thrust::transform(d_h.begin(), d_h.end(), d_h.begin(), axpb<float>(1.0f, thrust::transform_reduce(d_h.begin(), d_h.end(), axpb<float>(-1.0f / (float)numP, 0.0f), 0.0f, thrust::plus<float>())));
 
-    /*std::cout << "1/numP:"<<1 / (float)numP << std::endl;
-    std::cout << "mean h:" << thrust::transform_reduce(d_h.begin(), d_h.end(), axpb<float>(-1 / (float)numP, 0.0f), 0.0f, thrust::plus<float>()) << std::endl;
-    */
-	/*std::cout << "normalised d_h: " << std::endl;
-	thrust::copy(d_h.begin(), d_h.begin() + 20, std::ostream_iterator<float>(std::cout, " "));
-	std::cout << std::endl;*/
 
 	/*terminate condition*/
-	//h_time[iter] = toc();
-	//h_g_norm[iter] = sqrt(thrust::transform_reduce(d_g.begin(), d_g.end(), square<float>(), 0.0f, thrust::plus<float>()));
-	//std::cout << "[" << iter << "/" << maxIter << "] g norm: " << h_g_norm[iter] << "/" << eps << " (" << h_time[iter] << "s elapsed)..." << std::endl;
-	//std::cout << "[" << iter << "/" << maxIter << "] g norm: " << h_g_norm[iter] << "/" << eps << std::endl;
-
 	d_g_norm[0] = sqrt(thrust::transform_reduce(d_g.begin(), d_g.end(), square<float>(), 0.0f, thrust::plus<float>()));
 	//if (iter % 100 == 0)
+	if (!quiet_mode)
 		std::cout << "[" << iter << "/" << maxIter << "] g norm: " << d_g_norm[0] << "/" << eps << std::endl;
 	if (d_g_norm[0] < d_eps[0])
 		return 0;
@@ -443,6 +373,16 @@ void cuOMT_simple::write_pushed_mu(const char* output)
 void cuOMT_simple::write_h(const char* output)
 {
 	_get_to_csv(output, thrust::raw_pointer_cast(&d_h[0]), 1, numP);
+}
+
+void cuOMT_simple::write_volP(const char* output)
+{
+	_get_to_csv(output, thrust::raw_pointer_cast(&d_volP[0]), voln, dim);
+}
+
+void cuOMT_simple::write_ind(const char* output)
+{
+	_get_to_csv(output, thrust::raw_pointer_cast(&d_ind[0]), 1, voln);
 }
 #ifdef USE_FANCY_GD
 void cuOMT_simple::write_adam_m(const char* output)
@@ -469,12 +409,6 @@ int cuOMT_simple::gd_clean(void)
 		fprintf(stderr, "!!!! memory free error (U)\n");
 		return EXIT_FAILURE;
 	}
-
-	/*if (cudaFree(d_PX) != cudaSuccess)
-	{
-		fprintf(stderr, "!!!! memory free error (U)\n");
-		return EXIT_FAILURE;
-	}*/
 
 	if (cudaFree(d_volP) != cudaSuccess)
 	{
@@ -503,7 +437,7 @@ int cuOMT_simple::gd_clean(void)
 		return EXIT_FAILURE;
 	}
 
-	std::cout << "cuOMT_simple finished successfully!\n(Press any key to continue...)" << std::endl;
+	std::cout << "cuOMT finished successfully!\n(Press any key to continue...)" << std::endl;
 	std::cin.get();
 	return 0;
 
@@ -635,13 +569,6 @@ void cuOMT_simple::_set_from_csv(const char* input, T* d_vec, int row, int col)
 	auto d_vec_ptr = thrust::device_pointer_cast(d_vec);
 	thrust::copy(h_vec.begin(), h_vec.end(), d_vec_ptr);
 
-	/*std::cout << "h_vec: " << std::endl;
-	thrust::copy(h_vec.begin(), h_vec.begin() + 20, std::ostream_iterator<float>(std::cout, " "));
-	std::cout << std::endl;
-
-	std::cout << "d_vec: " << std::endl;
-	thrust::copy(d_vec_ptr, d_vec_ptr + 20, std::ostream_iterator<float>(std::cout, " "));
-	std::cout << std::endl;*/
 
 
 	h_vec.clear();
@@ -665,28 +592,32 @@ void cuOMT_simple::run_simple_omt(int argc, char* argv[])
 
 	while (iter < maxIter && !gd_calc_measure() && gd_update_h())
 	{
-		if (iter < 300 || iter % 300 == 0)
+		if (!no_output)
 		{
-			std::string output_mu = std::string("data/skeleton/pushed_mu/") + std::to_string(iter) + std::string(".csv");
-			write_pushed_mu(output_mu.c_str());
+			std::string output_h = std::string("h/") + std::to_string(iter) + std::string(".csv");
+            write_h(output_h.c_str());
+
+            std::string output_mu = std::string("pushed_mu/") + std::to_string(iter) + std::string(".csv");
+            write_pushed_mu(output_mu.c_str());
+
+
+            std::string output_volP = std::string("volP/") + std::to_string(iter) + std::string(".csv");
+            write_volP(output_volP.c_str());
+
+            std::string output_ind = std::string("ind/") + std::to_string(iter) + std::string(".csv");
+            write_ind(output_ind.c_str());
 		}
+
 	}
 	std::cout << "cuOMT loop takes " << toc() << "s" << std::endl;
-	write_h("data/skeleton/h.csv");
-	write_generated_P("data/skeleton/generated_P.csv");
+	write_h("./h/h.csv");
+	write_volP("./volP/volP_final.csv");
+	write_ind("./ind/ind_final.csv");
 	gd_clean();
 }
 
-/*
-	_dim dimension 2 or 3
-	_numP number of smapling points
-	_voln number of volume cell number
-	_maxIter number of max number of loops(iteration)
-	_eps thrshold value
-	_lr learning rate
-*/
-cuOMT_simple::cuOMT_simple(const int _dim, const int _numP, const int _voln, const int _maxIter, const float _eps, const float _lr)
-	:dim(_dim), numP(_numP), voln(_voln), maxIter(_maxIter), lr(_lr), eps(_eps)
+cuOMT_simple::cuOMT_simple(const int _dim, const int _numP, const int _voln, const int _maxIter, const float _eps, const float _lr, bool _no_output, bool _quiet_mode)
+	:dim(_dim), numP(_numP), voln(_voln), maxIter(_maxIter), lr(_lr), eps(_eps), no_output(_no_output), quiet_mode(_quiet_mode)
 {
 
 }

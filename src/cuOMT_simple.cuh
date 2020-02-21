@@ -28,10 +28,14 @@
 
 #include "OMT_functors.cuh"
 
-#define USE_FANCY_GD
+#define USE_FANCY_GD // toggles ADAM gradient descent (comment this line to fall back to vanilla gradient descent)
+
 class cuOMT_simple
 {
 protected:
+	/*display settings*/
+	bool no_output;
+	bool quiet_mode;
 
 	/*problem settings*/
 	const char* input_P;
@@ -39,7 +43,7 @@ protected:
 	const int dim;
 	const int voln;
 	const float eps;
-	const float lr;
+	float lr;
 
 	thrust::device_vector<float> d_eps;
 
@@ -148,7 +152,7 @@ protected:
 
 
 public:
-	cuOMT_simple(const int _dim, const int _numP, const int _voln, const int _maxIter, const float _eps, const float _lr);
+	cuOMT_simple(const int _dim, const int _numP, const int _voln, const int _maxIter, const float _eps, const float _lr, bool no_output, bool quiet_mode);
 	~cuOMT_simple() {};
 
 	/*gradient descent*/
@@ -168,6 +172,12 @@ public:
 
 	/*output current h*/
 	void write_h(const char* output);
+
+	/*output sample points*/
+	void write_volP(const char* output);
+
+	/*output sample ind's*/
+	void write_ind(const char* output);
 #ifdef USE_FANCY_GD
     /*output cache*/
     void write_adam_m(const char* output);

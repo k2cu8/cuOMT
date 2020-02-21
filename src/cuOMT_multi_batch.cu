@@ -1,6 +1,37 @@
 #include "cuOMT_multi_batch.cuh"
 #include "math_constants.h"
+#include <string>
+static const char *_cudaGetErrorEnum(cublasStatus_t error)
+{
+    switch (error)
+    {
+        case CUBLAS_STATUS_SUCCESS:
+            return "CUBLAS_STATUS_SUCCESS";
 
+        case CUBLAS_STATUS_NOT_INITIALIZED:
+            return "CUBLAS_STATUS_NOT_INITIALIZED";
+
+        case CUBLAS_STATUS_ALLOC_FAILED:
+            return "CUBLAS_STATUS_ALLOC_FAILED";
+
+        case CUBLAS_STATUS_INVALID_VALUE:
+            return "CUBLAS_STATUS_INVALID_VALUE";
+
+        case CUBLAS_STATUS_ARCH_MISMATCH:
+            return "CUBLAS_STATUS_ARCH_MISMATCH";
+
+        case CUBLAS_STATUS_MAPPING_ERROR:
+            return "CUBLAS_STATUS_MAPPING_ERROR";
+
+        case CUBLAS_STATUS_EXECUTION_FAILED:
+            return "CUBLAS_STATUS_EXECUTION_FAILED";
+
+        case CUBLAS_STATUS_INTERNAL_ERROR:
+            return "CUBLAS_STATUS_INTERNAL_ERROR";
+    }
+
+    return "<unknown>";
+}
 
 int cuOMT_multi_batch::gd_mul_bat_init(int argc, char* argv[])
 {
@@ -105,7 +136,10 @@ int cuOMT_multi_batch::gd_mul_bat_init(int argc, char* argv[])
 #endif
     }
     if (!set_TP)
+    {
         std::cout << "Warning: host vector (TP) is not set during initialization" << std::endl;
+        thrust::fill(h_TP.begin(), h_TP.end(), 0.1f);
+    }
     if (!set_Pool_dir)
         std::cout << "Warning: random pool directory root is not set during initialization" << std::endl;
     if (!set_TA)
@@ -114,8 +148,10 @@ int cuOMT_multi_batch::gd_mul_bat_init(int argc, char* argv[])
         thrust::fill(d_t_h.begin(), d_t_h.end(), 0.0f);
 
 #ifdef USE_FANCY_GD
-    thrust::fill(d_t_adam_m_ptr, d_t_adam_m_ptr + numTP, 0.0f);
-    thrust::fill(d_t_adam_v_ptr, d_t_adam_v_ptr + numTP, 0.0f);
+    if (!set_t_adam_m)
+        thrust::fill(d_t_adam_m_ptr, d_t_adam_m_ptr + numTP, 0.0f);
+    if (!set_t_adam_v)
+        thrust::fill(d_t_adam_v_ptr, d_t_adam_v_ptr + numTP, 0.0f);
 #endif // USE_FANCY_GD
 
 
@@ -126,7 +162,10 @@ int cuOMT_multi_batch::gd_bat_calc_measure()
 {
     //iterate over P batch
     thrust::fill(d_t_ind_val.begin(), d_t_ind_val.end(), -1e30); // assume PX+H is not smaller than -1e9
-    auto d_P_ptr = thrust::device_pointer_cast(d_P);
+
+
+    thrust::device_ptr<float> d_P_ptr = thrust::device_pointer_cast(d_P);
+
     for (int p_iter = 0; p_iter < numBatP; ++p_iter)
     {
         // duplicate h, i.e repmat(h, [voln 1])
@@ -136,16 +175,14 @@ int cuOMT_multi_batch::gd_bat_calc_measure()
         thrust::copy(h_TP.begin() + p_iter * numP*dim, h_TP.begin() + (p_iter + 1) * numP*dim, d_P_ptr);
 
         // PX+H
-        if (cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_T, numP, voln, dim, alpha, d_P, numP, d_volP, voln, alpha, d_U, numP) != CUBLAS_STATUS_SUCCESS)
+        cublasStatus_t status = cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_T, numP, voln, dim, alpha, d_P, numP, d_volP, voln, alpha, d_U, numP);
+        if (status!= CUBLAS_STATUS_SUCCESS)
         {
+            std::cout << _cudaGetErrorEnum(status) <<std::endl;
             fprintf(stderr, "!!!! Device matrix multiplication error (U <- PX + H)\n");
             return EXIT_FAILURE;
         }
-
-        /*std::cout << "d_U: " << std::endl;
-        thrust::copy(d_U_ptr, d_U_ptr + 20, std::ostream_iterator<float>(std::cout, " "));
-        std::cout << std::endl;*/
-
+        
         // find max parallelly
         thrust::reduce_by_key(thrust::device, d_sampleId.begin(), d_sampleId.begin() + numP * voln, thrust::make_zip_iterator(thrust::make_tuple(d_cellId.begin(), d_U_ptr)), d_voln_key.begin(),
             thrust::make_zip_iterator(thrust::make_tuple(d_ind.begin(), d_ind_val.begin())), thrust::equal_to<int>(), find_max());
@@ -158,29 +195,10 @@ int cuOMT_multi_batch::gd_bat_calc_measure()
             thrust::make_zip_iterator(thrust::make_tuple(d_ind.begin(), d_ind_val.begin())), thrust::make_zip_iterator(thrust::make_tuple(d_t_ind.begin(), d_t_ind_val.begin())),
             find_max());
 
-       /* std::cout << "d_ind: " << std::endl;
-        thrust::copy(d_ind.begin(), d_ind.begin() + 20, std::ostream_iterator<int>(std::cout, " "));
-        std::cout << std::endl;
-
-        std::cout << "d_ind_val: " << std::endl;
-        thrust::copy(d_ind_val.begin(), d_ind_val.begin() + 20, std::ostream_iterator<float>(std::cout, " "));
-        std::cout << std::endl;
-
-        std::cout << "d_t_ind: " << std::endl;
-        thrust::copy(d_t_ind.begin(), d_t_ind.begin() + 20, std::ostream_iterator<int>(std::cout, " "));
-        std::cout << std::endl;
-        
-        std::cout << "d_t_ind_val: " << std::endl;
-        thrust::copy(d_t_ind_val.begin(), d_t_ind_val.begin() + 20, std::ostream_iterator<float>(std::cout, " "));
-        std::cout << std::endl;
-
-        std::cin.get();*/
     }
     // calculate histogram
     dense_histogram(d_t_ind, d_t_g);
 
-
-    //std::cout << "sum_ind: "<< thrust::reduce(d_t_g.begin(), d_t_g.end()) << std::endl;
     return 0;
 }
 
@@ -199,30 +217,18 @@ int cuOMT_multi_batch::gd_bat_update_h()
     thrust::transform(thrust::device, d_t_g.begin(), d_t_g.end(), d_t_delta_h.begin(), axpb<float>(-lr, 0.0f));
     thrust::transform(thrust::device, d_t_h.begin(), d_t_h.begin() + numP, d_t_delta_h.begin(), d_t_h.begin(), thrust::plus<float>());
 #endif
-    //std::cout << "d_delta_h: " << std::endl;
-    //thrust::copy(d_t_delta_h.begin(), d_t_delta_h.begin() + 20, std::ostream_iterator<float>(std::cout, " "));
-    //std::cout << std::endl;
-
-    //std::cout << "d_h: " << std::endl;
-    //thrust::copy(d_t_h.begin(), d_t_h.begin() + 20, std::ostream_iterator<float>(std::cout, " "));
-    //std::cout << std::endl;
 
     
     /*normalize h*/
     thrust::transform(d_t_h.begin(), d_t_h.end(), d_t_h.begin(), 
         axpb<float>(1.0f, thrust::transform_reduce(d_t_h.begin(), d_t_h.end(), axpb<float>(-1.0f / (float)numTP, 0.0f), 0.0f, thrust::plus<float>())));
 
-    //std::cout << "1/numP:"<<1 / (float)numP << std::endl;
-    //std::cout << "mean h:" << thrust::transform_reduce(d_t_h.begin(), d_t_h.end(), axpb<float>(-1 / (float)numTP, 0.0f), 0.0f, thrust::plus<float>()) << std::endl;    
-    //std::cout << "normalised d_h: " << std::endl;
-    //thrust::copy(d_t_h.begin(), d_t_h.begin() + 20, std::ostream_iterator<float>(std::cout, " "));
-    //std::cout << std::endl;
-    //std::cin.get();
 
     /*terminate condition*/
     d_g_norm[0] = sqrt(thrust::transform_reduce(d_t_g.begin(), d_t_g.end(), square<float>(), 0.0f, thrust::plus<float>()));
     //if (iter % 100 == 0)
-    std::cout << "[" << iter << "/" << maxIter << "] g norm: " << d_g_norm[0] << "/" << eps << std::endl;
+    if (!quiet_mode)
+        std::cout << "[" << iter << "/" << maxIter << "] g norm: " << d_g_norm[0] << "/" << eps << std::endl;
     if (d_g_norm[0] < d_eps[0])
         return 0;
     else ++iter;
@@ -248,7 +254,7 @@ void cuOMT_multi_batch::run_cuOMT_mul_bat_gd(int argc, char* argv[])
     int count_bad_iter = 0;
 
     // record results
-    const char* output = (std::string("test_g/g_bat.csv")).c_str();
+    const char* output = (std::string("g_log.csv")).c_str();
     std::ofstream file;
     file.open(output);
     while (not_converge && steps <= maxIter)
@@ -270,8 +276,8 @@ void cuOMT_multi_batch::run_cuOMT_mul_bat_gd(int argc, char* argv[])
         file << d_g_norm[0] << ",";
 
         // record best norm
-        if (d_g_norm[0] < best_g_norm)
-            //if (true)
+        // if (d_g_norm[0] < best_g_norm && !no_output)
+        if (!no_output)
         {
             std::string output_h = std::string("h/") + std::to_string(steps) + std::string(".csv");
             _get_to_csv(output_h.c_str(), thrust::raw_pointer_cast(&d_t_h[0]), 1, numTP);
@@ -279,6 +285,13 @@ void cuOMT_multi_batch::run_cuOMT_mul_bat_gd(int argc, char* argv[])
             std::string output_mu = std::string("pushed_mu/") + std::to_string(steps) + std::string(".csv");
             thrust::transform(d_t_g_sum.begin(), d_t_g_sum.end(), d_t_g_sum.begin(), axpb<float>(1.0f / (voln*dyn_numBat), 0));
             _get_to_csv(output_mu.c_str(), thrust::raw_pointer_cast(&d_g_sum[0]), 1, numTP);
+
+            std::string output_volP = std::string("volP/") + std::to_string(steps) + std::string(".csv");
+            write_volP(output_volP.c_str());
+
+            std::string output_ind = std::string("ind/") + std::to_string(steps) + std::string(".csv");
+            write_ind(output_ind.c_str());
+
 #ifdef USE_FANCY_GD
             std::string output_adam_m = std::string("adam_m/") + std::to_string(steps) + std::string(".csv");
             _get_to_csv(output_adam_m.c_str(), d_t_adam_m, 1, numTP);
@@ -309,6 +322,10 @@ void cuOMT_multi_batch::run_cuOMT_mul_bat_gd(int argc, char* argv[])
         steps++;
     }
     file.close();
+
+    write_h("./h/h_final.csv");
+    write_volP("./volP/volP_final.csv");
+    write_ind("./ind/ind_final.csv");
 
     std::cout << "MC-OMT computation takes " << toc() << "s..." << std::endl;
 

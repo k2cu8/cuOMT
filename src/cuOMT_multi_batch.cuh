@@ -43,8 +43,8 @@ protected:
     int gd_bat_update_h();
 
 public:
-    cuOMT_multi_batch(const int _dim, const int _numP, const int _voln, const int _maxIter, const float _eps, const float _lr, const int _numBat, const int _numTP) :
-        cuOMT_batched(_dim,_numP,_voln,_maxIter,_eps,_lr,_numBat), numTP(_numTP)
+    cuOMT_multi_batch(const int _dim, const int _numP, const int _voln, const int _maxIter, const float _eps, const float _lr, const int _numBat, bool no_output, bool quiet_mode, const int _numTP) :
+        cuOMT_batched(_dim,_numP,_voln,_maxIter,_eps,_lr,_numBat,no_output,quiet_mode), numTP(_numTP)
     {
         if (numTP % numP != 0)
             std::cerr << "Error: batch size " << numP << " is not a factor of " << numTP << std::endl;

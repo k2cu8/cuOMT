@@ -27,8 +27,8 @@ protected:
     void write_dyn_pushed_mu(const char* output, int nb);
 
 public:
-	cuOMT_batched(const int _dim, const int _numP, const int _voln, const int _maxIter, const float _eps, const float _lr, const int _numBat) :
-		cuOMT_simple(_dim, _numP, _voln, _maxIter, _eps, _lr), numBat(_numBat)
+	cuOMT_batched(const int _dim, const int _numP, const int _voln, const int _maxIter, const float _eps, const float _lr, bool _no_output, bool _quiet_mode, const int _numBat) :
+		cuOMT_simple(_dim, _numP, _voln, _maxIter, _eps, _lr, _no_output, _quiet_mode), numBat(_numBat)
 	{
         m_use_rn_pool = false;
 	};
