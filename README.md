@@ -24,12 +24,12 @@ The solver in this repository solves a particular class of OT problems, namely t
 
 Figures above illustrate the optimization process (left) and the final result (right). In each iteration, the transported distribution under the *current* calculated transport mapping is displayed, with different colored regions representing masses on different target points. After convergence, approximately 1/20 of the total area of [0,1]^2 is assigned to each target point, and the total distance between each points in [0,1]^2 are their images under the transport mapping is minimal. 
 
-To accelerate the convergence, the Adam gradient descent method is also available. Figures below illustrate its optimization process:
+To accelerate the convergence, the ADAM gradient descent method is also available. Figures below illustrate its optimization process (left) and the final result (right):
 
 <!-- ![out1](imgs/output1.gif =400x)  ![out1_final](imgs/out1_final.png =400x) -->
 <img src="imgs/output1.gif" width="400"> <img src="imgs/out1_final.png" width="400">
 
-As expected, although the convergence path here is different from the previous example, the final result remains the same, because the optimization is convex. 
+We can see that the convergence path here is different from the previous example. However, the final result remains the same, as convex optimization is happening here.
 
 ## Implementation
 Under the variational principle of solving semi-discrete OT problems, the solver here minimizes the convex energy by adapting the Monte Carlo integration approach. Traditionally, this energy is precisely calculated with geometric methods and data structures (i.e. triangular meshes in 2-D and tetrahedral meshes in 3D), whose high-dimsional counterparts are either too much memory consuming or numerically unstable (e.g. calculating high-dimensional convex hulls). The approach here is to approximate the energy with Monte Carlo integration. Thanks to the convexity of the optimization problem, the algorithm is robust as the results converge to a unique solution regardless of paths. 
