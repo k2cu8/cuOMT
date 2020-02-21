@@ -19,30 +19,30 @@ then map it to the dataset distribution.
 
 The solver in this repository solves a particular class of OT problems, namely the semi-discrete OT problem, where the source distribution is continuous and the target distribution is discrete (i.e. a finite sum of Dirac distributions). In the demo below, the source distribution is the 2-dimensional uniform distribution on the unit square [0,1]^2 and the target distribution consists of 20 Dirac distributions, with each randomly position in the unit square and has mass 1/20. Our goal is to find a mapping, that maps each point in the unit square to one of the 20 target points, such that for each target point, the total mass being mapped to it (viewed as colored regions in the figures below) equals to 1/20. 
 
-![out2](imgs/output2.gif) | ![out2_final](imgs/out2_final.png)
+![out2](imgs/output2.gif =400x)  ![out2_final](imgs/out2_final.png =400x)
 
 Figures above illustrate the optimization process (left) and the final result (right). In each iteration, the transported distribution under the *current* calculated transport mapping is displayed, with different colored regions representing masses on different target points. After convergence, approximately 1/20 of the total area of [0,1]^2 is assigned to each target point, and the total distance between each points in [0,1]^2 are their images under the transport mapping is minimal. 
 
 To accelerate the convergence, the Adam gradient descent method is also available. Figures below illustrate its optimization process:
 
-![out1](imgs/output1.gif) | ![out1_final](imgs/out1_final.png)
+![out1](imgs/output1.gif =400x)  ![out1_final](imgs/out1_final.png =400x)
 
 As expected, although the convergence path here is different from the previous example, the final result remains the same, because the optimization is convex. 
 
 ## Implementation
 Under the variational principle of solving semi-discrete OT problems, the solver here minimizes the convex energy by adapting the Monte Carlo integration approach. Traditionally, this energy is precisely calculated with geometric methods and data structures (i.e. triangular meshes in 2-D and tetrahedral meshes in 3D), whose high-dimsional counterparts are either too much memory consuming or numerically unstable (e.g. calculating high-dimensional convex hulls). The approach here is to approximate the energy with Monte Carlo integration. Thanks to the convexity of the optimization problem, the algorithm is robust as the results converge to a unique solution regardless of paths. 
 
-Most part of the code is written in CUDA/C++. In particular, the CUDA libraries cuRAND, cuBLAS and Thrust are used. Thanks NVIDIA for the comprehensive user manuals of the libraries. 
+Most of the code are written in CUDA/C++. In particular, the CUDA libraries cuRAND, cuBLAS and Thrust are used. Thanks NVIDIA for comprehensive user manuals for the toolkits. 
 
 ## Requirements
 Currently only Linux is supported. The following tools are needed:
 * gcc >= 7.4.0
 * CUDA toolkit >= 10.0 
 
-Build:
+## Building:
 > make
 
-Run:
+## Running:
 > ./cuOMT \**mode*\* \[-parameters params ...\] \[\-\-flags ...\]
 
 * \**mode*\*: Running mode including 
@@ -70,7 +70,7 @@ Run:
     * "\-\-no_output": suppresses file outputs during the optimization. 
     * "\-\-quiet_mode": suppresses most of the screen printing during the optimization.
 
-## Demo run
+## Demo code
 To reproduce the figures shown above:
 > ./cuOMT batch -P data/test_P.csv -lr 1e-3
 
