@@ -11,11 +11,10 @@ move the mass on the source distribution to the target distribution. For example
 and the target distribution consists of the cafe shops who need the bread, then the optimal transport problem is to find a transport plan
 moving the bread from bakeries to cafe shops while minimizing the transportation cost. 
 
-The optimal transport problems arises whenever one needs to find a "good" mapping (i.e. OT mapping) that transform a distribution to another. For example, 
+The optimal transport problem arises whenever one needs to find a "good" mapping (i.e. OT mapping) that transform a distribution to another. For example, 
 in the deep learning field, generative models are designed to generate infinately many samples similar to those from a given dataset. 
 If we take samples of the dataset as an i.i.d sampling of a latent distribution (potentially of high dimension), then with a OT mapping
-from a prior known distribution (e.g. uniform), one can generate as much samples by first randomly samples under the prior distribution, 
-then map it to the dataset distribution.
+from a prior known distribution (e.g. uniform) this latent distribution, one can generate as much samples by sampling in the prior distribution and then map them to the target distribution.
 
 <!-- A large class of deep neural network models have been designed to solve OT problems (e.g. GANs). In contrast to the approach used here, training such DNNs involves solving *non-convex* optimization problems and potentially hard to converge if the transport map the DNNs try to regress to is discontinuous. The OT solver here provides an efficable alternative to these methods.  -->
 
