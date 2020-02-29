@@ -7,35 +7,35 @@ This repository contains **cuOMT**, a CUDA/C++ solver utilizing the Adaptive Mon
 ## Big ideas
 The adaptive MC-OT algorithm aims to solve *high-dimensional* optimal transport problem, through solving a *convex* optimization problem.
 Basically, given a source distribution and a target distribution, the optimal transport problem is to find the *optimal* transport plan to
-move the mass on the source distribution to the target distribution. For example, imagine the source distribution consists of the breads made by all bakeries, 
-and the target distribution consists of the cafe shops who need the bread, then the optimal transport problem is to find a transport plan
-moving the bread from bakeries to cafe shops while minimizing the transportation cost. 
+move the mass on the source distribution to the target distribution. For example, imagine the source distribution consists of how much bread made by each bakeries, 
+and the target distribution consists of the amount of bread needed by each cafe shops. The bakeries and cafes are located at different places and there are transporting costs moving bread from one location to another. Then the optimal transport problem is to find a transport plan
+moving the bread from the bakeries to the cafe shops minimizing the total transport cost. 
 
-The optimal transport problem arises whenever one needs to find a "good" mapping (i.e. OT mapping) that transform a distribution to another. For example, 
-in the deep learning field, generative models are designed to generate infinately many samples similar to those from a given dataset. 
+Optimal transport problems arise whenever one needs to find a "good" mapping (i.e. OT mapping) that transform a distribution to another. For example, 
+in deep learning field, generative models are designed to generate infinately many samples similar to those from a given dataset. 
 If we take samples of the dataset as an i.i.d sampling of a latent distribution (potentially of high dimension), then with a OT mapping
-from a prior known distribution (e.g. uniform) this latent distribution, one can generate as much samples by sampling in the prior distribution and then map them to the target distribution.
+bewteen a prior known distribution (e.g. uniform) and this latent distribution, one can generate infinitely many new data by first taking samples in the prior distribution and then map them to the target distribution by the OT map.
 
 <!-- A large class of deep neural network models have been designed to solve OT problems (e.g. GANs). In contrast to the approach used here, training such DNNs involves solving *non-convex* optimization problems and potentially hard to converge if the transport map the DNNs try to regress to is discontinuous. The OT solver here provides an efficable alternative to these methods.  -->
 
-The solver in this repository solves a particular class of OT problems, namely the semi-discrete OT problem, where the source distribution is continuous and the target distribution is discrete (i.e. a finite sum of Dirac distributions). In the demo below, the source distribution is the 2-dimensional uniform distribution on the unit square [0,1]^2 and the target distribution consists of 20 Dirac distributions, with each randomly position in the unit square and has mass 1/20. Our goal is to find a mapping, that maps each point in the unit square to one of the 20 target points, such that for each target point, the total mass being mapped to it (viewed as colored regions in the figures below) equals to 1/20. 
+The solver in this repository solves a particular class of OT problems, namely the semi-discrete OT problem, where the source distribution is continuous and the target distribution is discrete (i.e. a finite sum of Dirac distributions). In the demo below, the source distribution is the 2-dimensional uniform distribution on the unit square [0,1]^2 and the target distribution consists of 20 Dirac distributions, with each randomly positioned in the unit square and has mass 1/20. Our goal is to find a mapping, that maps each point in the unit square to one of the 20 target points, such that for each target point, the total mass being mapped to it (viewed as colored regions in the figures below) equals to 1/20. 
 
 <!-- ![out2](imgs/output2.gif =400x)  ![out2_final](imgs/out2_final.png =400x) -->
 <img src="imgs/output2.gif" width="400"> <img src="imgs/out2_final.png" width="400">
 
-Figures above illustrate the optimization process (left) and the final result (right). In each iteration, the transported distribution under the *current* calculated transport mapping is displayed, with different colored regions representing masses on different target points. After convergence, approximately 1/20 of the total area of [0,1]^2 is assigned to each target point, and the total distance between each points in [0,1]^2 are their images under the transport mapping is minimal. 
+Figures above illustrate the optimization process (left) and the final result (right). In each iteration, the transported distribution under the *current* calculated transport mapping is displayed, with different colored regions representing masses on different target points. After convergence, approximately 1/20 of the total area of [0,1]^2 is assigned to each target point, and the total distance between each points in [0,1]^2 and their images under the transport mapping is minimal. 
 
-To accelerate the convergence, the ADAM gradient descent method is also available. Figures below illustrate its optimization process (left) and the final result (right):
+To accelerate the convergence, the ADAM gradient descent method is also implemented here. Figures below illustrate its optimization process (left) and the final result (right):
 
 <!-- ![out1](imgs/output1.gif =400x)  ![out1_final](imgs/out1_final.png =400x) -->
 <img src="imgs/output1.gif" width="400"> <img src="imgs/out1_final.png" width="400">
 
-We can see that the convergence path here is different from the previous example. However, the final result remains the same, as convex optimization is happening here.
+We can see that the converging path here is different from the previous example that uses vanilla gradient descent method. However, the final result remains the same, as convex optimization is happening here.
 
 ## Implementation
-Under the variational principle of solving semi-discrete OT problems, the solver here minimizes the convex energy by adapting the Monte Carlo integration approach. Traditionally, this energy is precisely calculated with geometric methods and data structures (i.e. triangular meshes in 2-D and tetrahedral meshes in 3D), whose high-dimsional counterparts are either too much memory consuming or numerically unstable (e.g. calculating high-dimensional convex hulls). The approach here is to approximate the energy with Monte Carlo integration. Thanks to the convexity of the optimization problem, the algorithm is robust as the results converge to a unique solution regardless of paths. 
+Under the variational principle of solving semi-discrete OT problems, the solver implemented here minimizes the convex energy by adopting the Monte Carlo approach. Traditionally, this energy is precisely calculated with geometric methods and data structures (i.e. triangular meshes in 2-D and tetrahedral meshes in 3D), whose high-dimsional counterparts are either too much memory consuming or numerically unstable (e.g. calculating high-dimensional convex hulls). The approach here is to approximate the energy with Monte Carlo integration, and then optimize it using gradient descent methods. Thanks to the convexity of the energy, the algorithm is robust and the final results converge to a unique solution regardless of converging paths. 
 
-Most of the code are written in CUDA/C++. In particular, the CUDA libraries cuRAND, cuBLAS and Thrust are used. Thanks NVIDIA for comprehensive user manuals for the toolkits. 
+Codes are written in CUDA/C++. In particular, the CUDA libraries cuRAND, cuBLAS and Thrust are used. Thanks NVIDIA for the comprehensive user manuals for the toolkits. 
 
 ## Requirements
 Currently only Linux is supported. The following tools are needed:
